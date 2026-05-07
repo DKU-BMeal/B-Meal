@@ -1,0 +1,13 @@
+.env
+.env.local
+frontend/.env
+backend/.env
+config.js
+ai-service.js
+supabaseClient.ts
+node_modules/
+dist/
+.env
+.vscode/
+uploads/
+.claude/

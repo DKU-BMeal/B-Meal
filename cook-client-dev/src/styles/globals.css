@@ -1,0 +1,217 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 16px;
+  --background: #FDFBF0;
+  --foreground: #2D2D2D;
+  --card: #FFFFFF;
+  --card-foreground: #2D2D2D;
+  --popover: #FFFFFF;
+  --popover-foreground: #2D2D2D;
+  --primary: #465940;
+  --primary-foreground: #FFFFFF;
+  --secondary: #5A6B4E;
+  --secondary-foreground: #FFFFFF;
+  --muted: #F5F3E8;
+  --muted-foreground: #6C757D;
+  --accent: #6A7D5E;
+  --accent-foreground: #FFFFFF;
+  --destructive: #E63946;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(70, 89, 64, 0.2);
+  --input: transparent;
+  --input-background: #FFFFFF;
+  --switch-background: #5A6B4E;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: #465940;
+  --chart-1: #465940;
+  --chart-2: #5A6B4E;
+  --chart-3: #6A7D5E;
+  --chart-4: #52654A;
+  --chart-5: #7A8D6E;
+  --radius: 0.625rem;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #2D2D2D;
+  --sidebar-primary: #465940;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F5F3E8;
+  --sidebar-accent-foreground: #2D2D2D;
+  --sidebar-border: rgba(70, 89, 64, 0.2);
+  --sidebar-ring: #465940;
+  
+  /* 3D Effects */
+  --shadow-3d-sm: 0 2px 4px rgba(70, 89, 64, 0.1), 0 4px 8px rgba(70, 89, 64, 0.08);
+  --shadow-3d-md: 0 4px 6px rgba(70, 89, 64, 0.12), 0 8px 16px rgba(70, 89, 64, 0.1);
+  --shadow-3d-lg: 0 8px 16px rgba(70, 89, 64, 0.15), 0 16px 32px rgba(70, 89, 64, 0.12);
+  --shadow-3d-xl: 0 12px 24px rgba(70, 89, 64, 0.18), 0 24px 48px rgba(70, 89, 64, 0.15);
+  --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.dark {
+  --background: #1A1A1D;
+  --foreground: #F8F9FA;
+  --card: #2D2D30;
+  --card-foreground: #F8F9FA;
+  --popover: #2D2D30;
+  --popover-foreground: #F8F9FA;
+  --primary: #5A6B4E;
+  --primary-foreground: #FFFFFF;
+  --secondary: #6A7D5E;
+  --secondary-foreground: #F8F9FA;
+  --muted: #2D2D30;
+  --muted-foreground: #ADB5BD;
+  --accent: #7A8D6E;
+  --accent-foreground: #1A1A1D;
+  --destructive: #E63946;
+  --destructive-foreground: #F8F9FA;
+  --border: rgba(90, 107, 78, 0.2);
+  --input: #2D2D30;
+  --input-background: #2D2D30;
+  --ring: #5A6B4E;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: #5A6B4E;
+  --chart-2: #6A7D5E;
+  --chart-3: #7A8D6E;
+  --chart-4: #52654A;
+  --chart-5: #8A9D7E;
+  --sidebar: #1A1A1D;
+  --sidebar-foreground: #F8F9FA;
+  --sidebar-primary: #5A6B4E;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #2D2D30;
+  --sidebar-accent-foreground: #F8F9FA;
+  --sidebar-border: rgba(90, 107, 78, 0.2);
+  --sidebar-ring: #5A6B4E;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/**
+ * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
+ */
+@layer base {
+  :where(:not(:has([class*=' text-']), :not(:has([class^='text-'])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    p {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size);
+}
+
+/* Hide scrollbar for all scrollable elements */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Utility class for hiding scrollbar */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
