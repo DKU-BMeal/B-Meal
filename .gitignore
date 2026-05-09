@@ -1,0 +1,19 @@
+# Node modules
+node_modules/
+cook-server-dev/node_modules/
+cook-client-dev/node_modules/
+
+# Environment files
+cook-server-dev/.env
+.env
+
+# Build outputs
+cook-client-dev/dist/
+cook-server-dev/dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store

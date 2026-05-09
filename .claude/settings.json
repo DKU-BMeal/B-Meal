@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(/Users/sonjisoo/Downloads/COOK-main/cook-client-dev/node_modules/.bin/tsc --noEmit)",
+      "Bash(lsof -ti:5173)",
+      "Bash(echo \"서버 PID: $!\")",
+      "Read(//private/tmp/**)",
+      "Bash(npm run *)",
+      "Bash(echo \"클라이언트 PID: $!\")",
+      "Bash(git init *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)"
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npx nodemon *)",
+      "Bash(npm install *)",
+      "Bash(node index.js)",
+      "Bash(lsof -ti:3001)",
+      "Bash(xargs kill *)",
+      "Bash(psql -U postgres -c \"\\\\l\")",
+      "Bash(brew list *)",
+      "Read(//Applications/**)",
+      "Bash(brew --version)",
+      "Bash(brew install *)",
+      "Read(//opt/homebrew/**)",
+      "Read(//opt/homebrew/Cellar/postgresql@16/16.13/bin/**)",
+      "Bash(/opt/homebrew/bin/psql -U postgres -c \"\\\\l\")",
+      "Bash(PGPASSWORD=0629 /opt/homebrew/bin/psql -U postgres -c \"\\\\l\")",
+      "Bash(PGPASSWORD=0629 /opt/homebrew/bin/psql -U postgres -c \"SELECT datname FROM pg_database;\")",
+      "Bash(PGPASSWORD=0629 /opt/homebrew/bin/psql -U postgres -c \"CREATE DATABASE cooking_assistant;\")",
+      "Bash(PGPASSWORD=0629 node migrations/migrate.js)",
+      "Bash(curl -s http://localhost:3001/api/recipes/categories)",
+      "Bash(curl -s -X POST http://localhost:3001/api/recipes/crawl -H \"Content-Type: application/json\")",
+      "Bash(curl -s \"http://localhost:3001/api/recipes/public?limit=3\")",
+      "Bash(lsof -ti:5173 -ti:5174)",
+      "Bash(lsof -ti:5174)",
+      "Bash(lsof -ti:5174 -ti:5173)"
+    ]
+  }
+}
