@@ -352,9 +352,9 @@ export interface ShopProduct {
   mall: string;
 }
 
-export async function searchShopProducts(query: string): Promise<ShopProduct[]> {
-  const res = await apiCall(`/shop-search?q=${encodeURIComponent(query)}`, {}, false);
-  return res.items as ShopProduct[];
+export async function searchShopProducts(query: string, page = 1): Promise<{ items: ShopProduct[]; hasMore: boolean }> {
+  const res = await apiCall(`/shop-search?q=${encodeURIComponent(query)}&page=${page}`, {}, false);
+  return { items: res.items as ShopProduct[], hasMore: res.hasMore as boolean };
 }
 
 // ===============================
