@@ -91,7 +91,7 @@ export function HomePage({
 
         <div style={{ position: "relative", zIndex: 1, flex: 1 }}>
           <p style={{ color: "#86efac", fontSize: "13px", fontWeight: 500, marginBottom: "12px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-            CookingMate
+            B-Meal
           </p>
           <h1 style={{ color: "#ffffff", fontSize: "32px", fontWeight: 700, lineHeight: 1.3, marginBottom: "10px" }}>
             {userName ? `${userName}님, 안녕하세요!` : "안녕하세요!"}

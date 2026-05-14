@@ -37,7 +37,7 @@ export function MyPage({
 
         <div style={{ flex: 1 }}>
           <p style={{ color: "#86efac", fontSize: 12, fontWeight: 500, letterSpacing: "0.06em", marginBottom: 4 }}>
-            쿠킹메이트 회원
+            B-Meal 회원
           </p>
           <h2 style={{ color: "#fff", fontSize: 22, fontWeight: 700, marginBottom: 14 }}>{userName}</h2>
           <div style={{ display: "flex", gap: 8 }}>

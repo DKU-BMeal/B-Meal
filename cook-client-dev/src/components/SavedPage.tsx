@@ -1,4 +1,4 @@
-import { Bookmark, ChefHat, Utensils } from "lucide-react";
+import { Bookmark, ChefHat, Trash2, UtensilsCrossed } from "lucide-react";
 import type { Recipe } from "./RecipeListPage";
 
 interface SavedPageProps {
@@ -13,75 +13,108 @@ const isPlaceholderImage = (url?: string) => {
   return false;
 };
 
-export function SavedPage({ savedRecipes = [], onRecipeClick }: SavedPageProps) {
-  const buildImageFromTitle = (title: string) => {
-    const query = encodeURIComponent(`${title}, 음식, 요리, food`);
-    return `https://source.unsplash.com/featured/?${query}`;
-  };
-
+export function SavedPage({ savedRecipes = [], onRecipeClick, onRemoveSaved }: SavedPageProps) {
   return (
-    <div className="space-y-6">
+    <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
 
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">저장한 레시피</h1>
-          <p className="text-sm text-gray-500 mt-1">클릭하면 AI 요리 보조가 바로 시작됩니다</p>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-0.5px" }}>저장한 레시피</h1>
+          <p style={{ fontSize: 14, color: "#6b7280", marginTop: 4 }}>저장된 레시피로 AI 요리 가이드를 시작해보세요</p>
         </div>
-        <span className="px-4 py-1.5 rounded-full text-sm font-semibold" style={{ background:"#e8f2dd", color:"#3a5c3d" }}>
-          {savedRecipes.length}개
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#e8f2dd", border: "1px solid #c8e0b8", borderRadius: 10, padding: "8px 14px" }}>
+          <Bookmark style={{ width: 14, height: 14, fill: "#465940", color: "#465940" }} />
+          <span style={{ fontSize: 13, color: "#3a5c3d", fontWeight: 600 }}>{savedRecipes.length}개 저장됨</span>
+        </div>
       </div>
 
       {/* 빈 상태 */}
       {savedRecipes.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-24 bg-white rounded-xl border border-gray-200">
-          <Bookmark className="w-12 h-12 text-gray-300 mb-4" />
-          <p className="text-gray-500 font-medium">저장한 레시피가 없습니다</p>
-          <p className="text-gray-400 text-sm mt-1">마음에 드는 레시피를 저장해보세요</p>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 0", background: "#fff", borderRadius: 18, border: "1px solid #f3f4f6" }}>
+          <div style={{ width: 72, height: 72, borderRadius: 20, background: "#f9fafb", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+            <Bookmark style={{ width: 32, height: 32, color: "#d1d5db" }} />
+          </div>
+          <p style={{ fontSize: 16, fontWeight: 600, color: "#374151" }}>저장한 레시피가 없습니다</p>
+          <p style={{ fontSize: 14, color: "#9ca3af", marginTop: 6 }}>커뮤니티에서 마음에 드는 레시피를 저장해보세요</p>
         </div>
       )}
 
       {/* 그리드 */}
       {savedRecipes.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
           {savedRecipes.map((recipe) => {
             const title = recipe.name || "이름 없는 레시피";
-            const imageSrc =
-              recipe.image && recipe.image.startsWith("http") && !isPlaceholderImage(recipe.image)
-                ? recipe.image
-                : buildImageFromTitle(title);
+            const hasImage = recipe.image && recipe.image.startsWith("http") && !isPlaceholderImage(recipe.image);
 
             return (
               <div
                 key={recipe.id}
-                onClick={() => onRecipeClick?.(String(recipe.id))}
-                className="bg-white rounded-xl overflow-hidden border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
+                style={{ background: "#fff", borderRadius: 18, border: "1px solid #f3f4f6", overflow: "hidden", boxShadow: "0 1px 8px rgba(0,0,0,0.04)", display: "flex", flexDirection: "column", transition: "box-shadow 0.2s, transform 0.2s" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 24px rgba(0,0,0,0.10)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 8px rgba(0,0,0,0.04)"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
               >
                 {/* 이미지 */}
-                <div className="relative w-full bg-gray-100" style={{ paddingBottom: "68%" }}>
-                  <img
-                    src={imageSrc}
-                    alt={title}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center" style={{ background:"linear-gradient(135deg,#e8f2dd,#d4e5c8)" }}>
-                    <Utensils className="w-8 h-8 text-gray-300" />
+                <div style={{ position: "relative", paddingBottom: "62%", background: "linear-gradient(135deg, #e8f2dd, #d4e5c8)", overflow: "hidden", flexShrink: 0 }}>
+                  {hasImage ? (
+                    <img
+                      src={recipe.image!}
+                      alt={title}
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    />
+                  ) : (
+                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <ChefHat style={{ width: 40, height: 40, color: "#a7c49a", opacity: 0.7 }} />
+                    </div>
+                  )}
+
+                  {/* 저장 뱃지 */}
+                  <div style={{ position: "absolute", top: 10, right: 10, width: 30, height: 30, borderRadius: "50%", background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}>
+                    <Bookmark style={{ width: 14, height: 14, fill: "#facc15", color: "#facc15" }} />
                   </div>
-                  <div className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center" style={{ background:"rgba(0,0,0,0.4)" }}>
-                    <Bookmark className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                  </div>
+
+                  {/* 카테고리 */}
+                  {recipe.category && (
+                    <div style={{ position: "absolute", bottom: 10, left: 10 }}>
+                      <span style={{ display: "inline-block", padding: "3px 10px", borderRadius: 50, background: "rgba(0,0,0,0.45)", color: "#fff", fontSize: 11, fontWeight: 500, backdropFilter: "blur(4px)" }}>
+                        {recipe.category}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                {/* 정보 */}
-                <div className="p-3">
-                  <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-2 line-clamp-2">{title}</h3>
-                  <div className="flex items-center gap-1.5">
-                    <ChefHat className="w-3.5 h-3.5 text-[#465940]" />
-                    <span className="text-xs text-gray-400">
-                      {recipe.category || "저장된 레시피"}
-                    </span>
+                {/* 내용 */}
+                <div style={{ padding: "14px 16px 16px", display: "flex", flexDirection: "column", gap: 12, flex: 1 }}>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: "#111827", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    {title}
+                  </h3>
+
+                  {/* 버튼 그룹 */}
+                  <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
+                    {/* 요리하기 버튼 */}
+                    <button
+                      onClick={() => onRecipeClick?.(String(recipe.id))}
+                      style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", borderRadius: 12, background: "linear-gradient(135deg, #465940, #5a7050)", color: "#fff", fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", transition: "opacity 0.15s, transform 0.15s", boxShadow: "0 2px 8px rgba(70,89,64,0.25)" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.9"; (e.currentTarget as HTMLElement).style.transform = "scale(1.02)"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; (e.currentTarget as HTMLElement).style.transform = "scale(1)"; }}
+                    >
+                      <UtensilsCrossed style={{ width: 14, height: 14 }} />
+                      요리하기
+                    </button>
+
+                    {/* 삭제 버튼 */}
+                    {onRemoveSaved && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onRemoveSaved(recipe); }}
+                        title="저장 해제"
+                        style={{ width: 38, height: 38, borderRadius: 12, background: "#fff3f3", color: "#ef4444", border: "1px solid #fee2e2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#fee2e2"; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "#fff3f3"; }}
+                      >
+                        <Trash2 style={{ width: 15, height: 15 }} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

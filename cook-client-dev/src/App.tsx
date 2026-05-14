@@ -22,8 +22,6 @@ import type { Recipe as AiRecipe } from "./types/recipe";
 // ⭐ FoodRecipe / FullRecipe (첫 번째 코드에서 사용)
 import { FoodRecipe, FullRecipe } from "./components/FoodRecipe";
 
-// ⭐ OnboardingGuide (두 번째 코드에서 가져온 부분)
-import { OnboardingGuide } from "./components/OnboardingGuide";
 
 //import { getSavedRecipeById } from "./utils/api";
 
@@ -152,7 +150,6 @@ export default function App() {
   const [initialAiRecipe, setInitialAiRecipe] = useState<AiRecipe | null>(null);
 
   // ⭐ 추가: 첫 로그인 온보딩 상태
-  const [showOnboarding, setShowOnboarding] = useState(false);
 
 
   useEffect(() => {
@@ -255,19 +252,6 @@ localStorage.setItem(
 
 
   
-  // ------------------------------
-  // ⭐ 첫 로그인 온보딩 체크
-  // ------------------------------
-  useEffect(() => {
-    if (isAuthenticated && currentStep === "home" && currentUser) {
-      const key = `cooking_assistant_onboarding_shown_${currentUser.id}`;
-      const flag = localStorage.getItem(key);
-
-      if (flag !== "true") {
-        setShowOnboarding(true);
-      }
-    }
-  }, [isAuthenticated, currentStep, currentUser]);
 
   // ✅ 완료한 요리 목록 서버에서 최초 1회 로딩
 useEffect(() => {
@@ -284,13 +268,6 @@ useEffect(() => {
 }, [isAuthenticated]);
 
 
-  const handleOnboardingFinish = () => {
-    setShowOnboarding(false);
-    if (currentUser) {
-      const key = `cooking_assistant_onboarding_shown_${currentUser.id}`;
-      localStorage.setItem(key, "true");
-    }
-  };
   // ------------------------------
   //   다크모드 / 프로필 / 저장데이터 로드
   // ------------------------------
@@ -726,7 +703,7 @@ const openVoiceAssistantFresh = () => {
   //   네비게이션 바 / 하단바 표시 기준
   // ------------------------------
   const shouldShowNavigation =
-    isAuthenticated && currentStep !== "auth" && !showOnboarding;
+    isAuthenticated && currentStep !== "auth";
 
   const getActiveBottomTab = () => {
     switch (currentStep) {
@@ -990,12 +967,6 @@ const handleCompletedRecipeClick = async (recipe: CompletedRecipe) => {
             onIngredientsClick={() => navigateToStep("ingredients-management")}
             onRecipeClick={handleRecipeClick}
           />
-          {showOnboarding && (
-            <OnboardingGuide
-              onComplete={handleOnboardingFinish}
-              onSkip={handleOnboardingFinish}
-            />
-          )}
         </>
       )}
 

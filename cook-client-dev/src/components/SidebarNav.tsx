@@ -64,7 +64,7 @@ export function SidebarNav(props: SidebarNavProps) {
           <ChefHat style={{ width: 18, height: 18, color: "#fff" }} />
         </div>
         <span style={{ fontSize: 15, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
-          쿠킹메이트
+          B-Meal
         </span>
       </button>
 

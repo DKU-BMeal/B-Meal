@@ -52,7 +52,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  
+
     useEffect(() => {
     if (otpRemaining <= 0) return;
 
@@ -273,7 +273,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
             fontWeight: 700,
           }}
         >
-          쿠킹메이트
+          B-Meal
         </h1>
 
         <p className="text-muted-foreground">

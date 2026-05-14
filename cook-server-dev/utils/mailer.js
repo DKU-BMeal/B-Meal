@@ -10,9 +10,9 @@ export async function sendVerifyEmail(email, otp) {
   });
 
   await transporter.sendMail({
-    from: `"쿠킹메이트" <${process.env.MAIL_USER}>`,
+    from: `"B-Meal" <${process.env.MAIL_USER}>`,
     to: email,
-    subject: "쿠킹메이트 이메일 인증번호",
+    subject: "B-Meal 이메일 인증번호",
     html: `
       <h2>이메일 인증번호</h2>
       <p>아래 인증번호를 회원가입 화면에 입력해주세요.</p>
