@@ -342,6 +342,22 @@ export async function textToSpeech(text: string) {
 }
 
 // ===============================
+// SHOP SEARCH
+// ===============================
+export interface ShopProduct {
+  title: string;
+  price: string;
+  image: string;
+  link: string;
+  mall: string;
+}
+
+export async function searchShopProducts(query: string, page = 1): Promise<{ items: ShopProduct[]; hasMore: boolean }> {
+  const res = await apiCall(`/shop-search?q=${encodeURIComponent(query)}&page=${page}`, {}, false);
+  return { items: res.items as ShopProduct[], hasMore: res.hasMore as boolean };
+}
+
+// ===============================
 // HEALTH
 // ===============================
 export async function healthCheck() {
