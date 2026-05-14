@@ -1,9 +1,10 @@
 // aiController.js (최적화 버전)
-import { 
-  askGPT, 
-  askGPTFollowup, 
-  askIntent, 
-  isQuickNextCommand // 서비스에서 추가한 유틸리티 함수 임포트
+import {
+  askGPT,
+  askGPTFollowup,
+  askIntent,
+  askMealPlan,
+  isQuickNextCommand
 } from "../services/aiService.js";
 
 // ===============================================
@@ -34,6 +35,21 @@ export const chatWithGPT = async (req, res) => {
   } catch (err) {
     console.error("GPT Error:", err);
     res.status(500).json({ error: "레시피 생성 중 오류가 발생했습니다." });
+  }
+};
+
+// ===============================================
+// ★ 예산 기반 식단 생성 API
+// ===============================================
+export const chatMealPlan = async (req, res) => {
+  try {
+    const { budget, ingredients, opts } = req.body;
+    if (!budget) return res.status(400).json({ error: "budget is required" });
+    const result = await askMealPlan(budget, ingredients || [], opts || {});
+    res.json({ result });
+  } catch (err) {
+    console.error("MealPlan Error:", err);
+    res.status(500).json({ error: "식단 생성 중 오류가 발생했습니다." });
   }
 };
 

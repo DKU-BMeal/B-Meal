@@ -15,6 +15,7 @@ import { AccountSettings } from "./components/AccountSettings";
 import { CommunityPage } from "./components/CommunityPage";
 import { CompletedRecipesPage } from "./components/CompletedRecipesPage";
 import { DietReportPage } from "./components/DietReportPage";
+import { BudgetOptimizePage } from "./components/BudgetOptimizePage";
 import type { Recipe as AiRecipe } from "./types/recipe";
 
 //import { EmailVerified } from "./components/EmailVerified";
@@ -62,7 +63,8 @@ type AppStep =
   | "community"
   | "completed-recipes"
   | "full-recipe"
-  | "diet-report";
+  | "diet-report"
+  | "budget-optimize";
 
 interface RecipeDetailData {
   id: string;
@@ -730,6 +732,8 @@ const openVoiceAssistantFresh = () => {
         return "community";
       case "diet-report":
         return "diet-report";
+      case "budget-optimize":
+        return "budget-optimize";
       default:
         return "home";
     }
@@ -944,7 +948,7 @@ const handleCompletedRecipeClick = async (recipe: CompletedRecipe) => {
 
   const SIDEBAR_STEPS = new Set<AppStep>([
     "home", "auth", "recipe-list", "voice-assistant",
-    "ingredients-management", "community", "diet-report", "mypage",
+    "ingredients-management", "community", "diet-report", "budget-optimize", "mypage",
   ]);
   const shouldShowBackButton = !SIDEBAR_STEPS.has(currentStep);
 
@@ -1047,7 +1051,29 @@ const handleCompletedRecipeClick = async (recipe: CompletedRecipe) => {
         />
       )}
 
-      {currentStep === "ingredients-management" && <IngredientsManagement />}
+      {currentStep === "ingredients-management" && (
+        <IngredientsManagement
+          onStartCooking={(recipe) => {
+            const aiRecipe = {
+              id: "",
+              name: recipe.recipeName ?? "AI 추천 레시피",
+              description: undefined,
+              image: recipe.image ?? undefined,
+              category: "AI 추천",
+              cookingTime: null,
+              servings: null,
+              difficulty: null,
+              ingredients: (recipe.ingredients ?? []).map((name: string) => ({ name, amount: "" })),
+              steps: recipe.steps ?? [],
+              fullIngredients: recipe.fullIngredients ?? [],
+            };
+            setInitialAiRecipe(aiRecipe);
+            setSelectedFullRecipe(null);
+            setVoiceSessionKey(k => k + 1);
+            navigateToStep("voice-assistant");
+          }}
+        />
+      )}
 
       {currentStep === "account-settings" && (
         <AccountSettings
@@ -1084,6 +1110,10 @@ const handleCompletedRecipeClick = async (recipe: CompletedRecipe) => {
           onMyPageClick={() => navigateToStep("mypage")}
         />
       )}
+
+      {currentStep === "budget-optimize" && isAuthenticated && (
+        <BudgetOptimizePage />
+      )}
     </>
   );
 
@@ -1109,6 +1139,7 @@ const handleCompletedRecipeClick = async (recipe: CompletedRecipe) => {
           onMyPageClick={() => navigateToStep("mypage")}
           onCommunityClick={() => navigateToStep("community")}
           onDietReportClick={() => navigateToStep("diet-report")}
+          onBudgetClick={() => navigateToStep("budget-optimize")}
           onLogoClick={() => { setPageHistory([]); setCurrentStep("home"); }}
         />
       )}

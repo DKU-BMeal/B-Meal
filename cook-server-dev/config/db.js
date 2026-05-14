@@ -13,7 +13,7 @@ const pgPool = new Pool({
   database: process.env.DB_NAME || 'cooking_assistant',
   max: 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000,
 });
 
 pgPool.connect()
