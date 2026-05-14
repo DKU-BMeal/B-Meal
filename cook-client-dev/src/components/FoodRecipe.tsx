@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-// [수정] useParams, useNavigate 대신 Prop 기반으로 변경
-import { getFullRecipeDetail } from "../utils/api";
-import { Button } from "../components/ui/button"; // button 컴포넌트가 있다고 가정합니다.
-import { Loader2, Zap } from "lucide-react"; // 아이콘 컴포넌트가 있다고 가정합니다.
+import { getFullRecipeDetail, searchShopProducts, ShopProduct } from "../utils/api";
+import { Button } from "../components/ui/button";
+import { Loader2, Zap, X } from "lucide-react";
 
 // 백엔드의 GET /recipes/full/:id API 응답에 맞춰 타입 정의
 interface Step {
@@ -48,6 +47,11 @@ export function FoodRecipe({ recipeId, onStartCookingAssistant, onBack }: FoodRe
     const [recipe, setRecipe] = useState<FullRecipe | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [shopTarget, setShopTarget] = useState<string | null>(null);
+    const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
+    const [shopLoading, setShopLoading] = useState(false);
+    const [shopError, setShopError] = useState<string | null>(null);
+    const [shopSort, setShopSort] = useState<'default' | 'price_asc' | 'price_desc' | 'mall'>('default');
 
     useEffect(() => {
         if (!id) {
@@ -73,18 +77,82 @@ export function FoodRecipe({ recipeId, onStartCookingAssistant, onBack }: FoodRe
         fetchRecipe();
     }, [id]);
 
-    // 🔹 재료 문자열(ingredients_details)을 줄 단위 배열로 파싱하는 함수
+    // 🔹 쇼핑몰 이름 → 간략 라벨
+function mallLabel(name: string): string {
+  if (name.includes('쿠팡')) return '쿠팡';
+  if (name.includes('컬리') || name.includes('마켓컬리')) return '컬리';
+  if (name.includes('이마트') || name.includes('SSG') || name.includes('ssg')) return '이마트';
+  if (name.includes('11번가')) return '11번가';
+  if (name.includes('G마켓') || name.includes('gmarket')) return 'G마켓';
+  if (name.includes('옥션')) return '옥션';
+  if (name.includes('롯데')) return '롯데';
+  return name.length > 6 ? name.slice(0, 6) : name;
+}
+
+// 🔹 쇼핑몰 이름 → 뱃지 색상
+function mallColor(name: string): string {
+  if (name.includes('쿠팡')) return '#c00d0d';
+  if (name.includes('컬리') || name.includes('마켓컬리')) return '#5f0080';
+  if (name.includes('이마트') || name.includes('SSG') || name.includes('ssg')) return '#e25519';
+  if (name.includes('11번가')) return '#ff0000';
+  if (name.includes('G마켓')) return '#ff6600';
+  if (name.includes('옥션')) return '#e4393c';
+  if (name.includes('롯데')) return '#e4002b';
+  return '#6b7280';
+}
+
+// 🔹 재료 문자열을 개별 재료 배열로 파싱 (줄바꿈 + 쉼표 모두 처리)
 function parseIngredients(details: string | null): string[] {
   if (!details) return [];
   return details
-    .split(/\r?\n/)                      // 줄 단위로 자르고
-    .map((line) => line.trim())         // 앞뒤 공백 제거
-    .filter((line) => line.length > 0)  // 빈 줄 제거
-    .map((line) => {
-      // 불릿 기호(· • - *) 있으면 제거
-      return line.replace(/^[·•\-\*]\s*/, "");
-    });
+    .split(/\r?\n/)
+    .flatMap((line) => line.split(','))
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+    .map((item) => item.replace(/^[·•\-\*]\s*/, ""))
+    // 섹션 헤더([재료], [양념장] 등)는 제외
+    .filter((item) => !/^\[.*\]$/.test(item));
 }
+
+// 🔹 재료명에서 수량/단위를 제거해 쇼핑 검색어만 추출
+function extractIngredientName(line: string): string {
+  return line
+    // (200g), (1개), (약간) 형태의 괄호 수량 제거
+    .replace(/\([^)]*\)/g, '')
+    // 뒤에 붙은 숫자+단위 제거: 200g, 2개, 1큰술, 1/2컵 등
+    .replace(/\s*[\d\/\.]+\s*(g|gram|그램|그람|ml|mL|밀리리터|L|l|cc|kg|컵|큰술|작은술|T|t|개|알|마리|뿌리|장|봉|봉지|봉투|캔|팩|포|줌|줄기|쪽|통|토막|cm|조각|대|모|꼬집|꼬치|인분|스푼)\b\.?\s*$/gi, '')
+    .replace(/\s*(약간|조금|적당량|한줌|조금씩|약간씩|소량)\s*$/gi, '')
+    .replace(/\s+[\d\/\.]+\s*$/, '')
+    .trim();
+}
+
+function parsePrice(price: string): number {
+  return Number(price.replace(/,/g, '')) || 0;
+}
+
+const handleOpenShop = async (name: string) => {
+  setShopTarget(name);
+  setShopProducts([]);
+  setShopError(null);
+  setShopSort('default');
+  setShopLoading(true);
+  try {
+    const items = await searchShopProducts(name);
+    setShopProducts(items);
+    if (items.length === 0) setShopError('검색 결과가 없습니다.');
+  } catch (err: any) {
+    setShopError(err.message || '상품 정보를 불러오지 못했습니다.');
+  } finally {
+    setShopLoading(false);
+  }
+};
+
+const handleCloseShop = () => {
+  setShopTarget(null);
+  setShopProducts([]);
+  setShopError(null);
+  setShopSort('default');
+};
 
 const handleStartAssistant = () => {
   if (!recipe) return;
@@ -233,9 +301,24 @@ const handleStartAssistant = () => {
                 {/* ✅ 재료 정보 */}
                 <section className="p-4 border-b">
                 <h2 className="text-xl font-bold mb-3 text-[#465940]">재료</h2>
-                <p className="whitespace-pre-wrap text-gray-700">
-                    {renderValue(recipe.ingredients_details, "재료 정보가 없습니다.")}
-                </p>
+                {recipe.ingredients_details ? (
+                  <ul className="divide-y divide-gray-100">
+                    {parseIngredients(recipe.ingredients_details).map((ingredient, idx) => (
+                      <li key={idx} className="flex items-center justify-between py-2 text-sm text-gray-700">
+                        <span>{ingredient}</span>
+                        <button
+                          onClick={() => handleOpenShop(extractIngredientName(ingredient))}
+                          className="ml-4 flex-shrink-0 text-xs text-white px-3 py-0.5 rounded-full hover:opacity-80 transition-opacity"
+                          style={{ background: "#465940" }}
+                        >
+                          구매
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500">재료 정보가 없습니다.</p>
+                )}
                 </section>
 
                 {/* ✅ 조리 순서 */}
@@ -281,6 +364,107 @@ const handleStartAssistant = () => {
                 AI 요리보조 시작하기
                 </Button>
             </div>
+
+            {/* ✅ 쇼핑 모달 */}
+            {shopTarget && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                onClick={handleCloseShop}
+              >
+                <div
+                  className="bg-white rounded-2xl shadow-xl flex flex-col"
+                  style={{ width: '90vw', maxWidth: '1400px', height: '90vh' }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* 헤더 */}
+                  <div className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0">
+                    <div>
+                      <p className="text-xs text-gray-400">쇼핑 검색</p>
+                      <h3 className="text-base font-bold text-[#465940]">{shopTarget}</h3>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex gap-1">
+                        {([
+                          { key: 'default',    label: '기본' },
+                          { key: 'price_asc',  label: '낮은가격' },
+                          { key: 'price_desc', label: '높은가격' },
+                          { key: 'mall',       label: '쇼핑몰' },
+                        ] as const).map(({ key, label }) => (
+                          <button
+                            key={key}
+                            onClick={() => setShopSort(key)}
+                            className="text-xs px-2.5 py-1 rounded-full border transition-colors"
+                            style={
+                              shopSort === key
+                                ? { background: '#465940', color: '#fff', borderColor: '#465940' }
+                                : { background: '#fff', color: '#6b7280', borderColor: '#d1d5db' }
+                            }
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      <button onClick={handleCloseShop} className="text-gray-400 hover:text-gray-600">
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 결과 */}
+                  <div className="overflow-y-auto flex-1 px-4 py-4">
+                    {shopLoading && (
+                      <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                        <Loader2 className="animate-spin h-7 w-7 mb-3" />
+                        <p className="text-sm">상품 검색 중...</p>
+                      </div>
+                    )}
+
+                    {shopError && !shopLoading && (
+                      <p className="text-center text-sm text-gray-400 py-10">{shopError}</p>
+                    )}
+
+                    {!shopLoading && shopProducts.length > 0 && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px' }}>
+                        {[...shopProducts]
+                          .sort((a, b) => {
+                            if (shopSort === 'price_asc') return parsePrice(a.price) - parsePrice(b.price);
+                            if (shopSort === 'price_desc') return parsePrice(b.price) - parsePrice(a.price);
+                            if (shopSort === 'mall') return mallLabel(a.mall).localeCompare(mallLabel(b.mall), 'ko');
+                            return 0;
+                          })
+                          .map((product, idx) => (
+                          <a
+                            key={idx}
+                            href={product.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex flex-col rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow bg-white"
+                          >
+                            <div className="w-full aspect-square bg-gray-100 overflow-hidden relative">
+                              {product.image ? (
+                                <img src={product.image} alt={product.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">없음</div>
+                              )}
+                              <span
+                                className="absolute top-1 left-1 text-white rounded font-medium"
+                                style={{ background: mallColor(product.mall), fontSize: '9px', padding: '1px 5px' }}
+                              >
+                                {mallLabel(product.mall)}
+                              </span>
+                            </div>
+                            <div className="px-1.5 py-1">
+                              <p className="text-[11px] text-gray-700 leading-tight line-clamp-2">{product.title}</p>
+                              <p className="text-[11px] font-bold text-[#465940] mt-0.5">{product.price}원</p>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             </div>
 
