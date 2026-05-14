@@ -14,6 +14,7 @@ import { IngredientsManagement } from "./components/IngredientsManagement";
 import { AccountSettings } from "./components/AccountSettings";
 import { CommunityPage } from "./components/CommunityPage";
 import { CompletedRecipesPage } from "./components/CompletedRecipesPage";
+import { DietReportPage } from "./components/DietReportPage";
 import type { Recipe as AiRecipe } from "./types/recipe";
 
 //import { EmailVerified } from "./components/EmailVerified";
@@ -60,7 +61,8 @@ type AppStep =
   | "recipe-review"
   | "community"
   | "completed-recipes"
-  | "full-recipe"; 
+  | "full-recipe"
+  | "diet-report";
 
 interface RecipeDetailData {
   id: string;
@@ -726,6 +728,8 @@ const openVoiceAssistantFresh = () => {
         return "mypage";
       case "community":
         return "community";
+      case "diet-report":
+        return "diet-report";
       default:
         return "home";
     }
@@ -940,7 +944,7 @@ const handleCompletedRecipeClick = async (recipe: CompletedRecipe) => {
 
   const SIDEBAR_STEPS = new Set<AppStep>([
     "home", "auth", "recipe-list", "voice-assistant",
-    "ingredients-management", "community", "mypage",
+    "ingredients-management", "community", "diet-report", "mypage",
   ]);
   const shouldShowBackButton = !SIDEBAR_STEPS.has(currentStep);
 
@@ -1073,6 +1077,13 @@ const handleCompletedRecipeClick = async (recipe: CompletedRecipe) => {
           onRecipeClick={handleCompletedRecipeClick}
         />
       )}
+
+      {currentStep === "diet-report" && isAuthenticated && (
+        <DietReportPage
+          onStartCooking={() => navigateToStep("voice-assistant")}
+          onMyPageClick={() => navigateToStep("mypage")}
+        />
+      )}
     </>
   );
 
@@ -1097,6 +1108,7 @@ const handleCompletedRecipeClick = async (recipe: CompletedRecipe) => {
           onIngredientsClick={() => navigateToStep("ingredients-management")}
           onMyPageClick={() => navigateToStep("mypage")}
           onCommunityClick={() => navigateToStep("community")}
+          onDietReportClick={() => navigateToStep("diet-report")}
           onLogoClick={() => { setPageHistory([]); setCurrentStep("home"); }}
         />
       )}

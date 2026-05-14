@@ -1,4 +1,4 @@
-import { Home, BookOpen, Bot, Refrigerator, User, ChefHat, Users } from "lucide-react";
+import { Home, BookOpen, Bot, Refrigerator, User, ChefHat, Users, BarChart3 } from "lucide-react";
 
 interface SidebarNavProps {
   activeTab: string;
@@ -9,25 +9,28 @@ interface SidebarNavProps {
   onMyPageClick: () => void;
   onLogoClick: () => void;
   onCommunityClick?: () => void;
+  onDietReportClick?: () => void;
 }
 
 const NAV_ITEMS = [
-  { id: "home",        label: "홈",         icon: Home },
-  { id: "recipe",      label: "레시피",     icon: BookOpen },
-  { id: "ai",          label: "AI 요리",    icon: Bot },
-  { id: "ingredients", label: "냉장고",     icon: Refrigerator },
-  { id: "community",   label: "커뮤니티",   icon: Users },
-  { id: "mypage",      label: "마이페이지", icon: User },
+  { id: "home",        label: "홈",           icon: Home },
+  { id: "recipe",      label: "레시피",       icon: BookOpen },
+  { id: "ai",          label: "AI 요리",      icon: Bot },
+  { id: "ingredients", label: "냉장고",       icon: Refrigerator },
+  { id: "community",   label: "커뮤니티",     icon: Users },
+  { id: "diet-report", label: "식생활 리포트", icon: BarChart3 },
+  { id: "mypage",      label: "마이페이지",   icon: User },
 ];
 
 export function SidebarNav(props: SidebarNavProps) {
   const handlers: Record<string, () => void> = {
-    home:        props.onHomeClick,
-    recipe:      props.onRecipeClick,
-    ai:          props.onAIClick,
-    ingredients: props.onIngredientsClick,
-    community:   props.onCommunityClick ?? (() => {}),
-    mypage:      props.onMyPageClick,
+    home:          props.onHomeClick,
+    recipe:        props.onRecipeClick,
+    ai:            props.onAIClick,
+    ingredients:   props.onIngredientsClick,
+    community:     props.onCommunityClick ?? (() => {}),
+    "diet-report": props.onDietReportClick ?? (() => {}),
+    mypage:        props.onMyPageClick,
   };
 
   return (

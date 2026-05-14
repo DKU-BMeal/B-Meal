@@ -18,6 +18,7 @@ import completedRecipesRoutes from './routes/completedRecipes.js';
 import communityRoutes from "./routes/community.js";
 import savedRoutes from "./routes/saved.js";
 import shopSearchRoutes from "./routes/shopSearch.js";
+import dietReportRoutes from "./routes/dietReport.js";
 
 
 
@@ -89,6 +90,7 @@ app.use("/api/completed-recipes", completedRecipesRoutes);
 /* ✅✅✅ 여기서부터 보호 라우트 */
 app.use("/api/community", authenticateToken, communityRoutes);
 app.use("/api/saved", authenticateToken, savedRoutes);
+app.use("/api/diet-report", authenticateToken, dietReportRoutes);
 
 
 // ============================================
