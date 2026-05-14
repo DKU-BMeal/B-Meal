@@ -724,6 +724,8 @@ const openVoiceAssistantFresh = () => {
       case "saved":
       case "completed-recipes":
         return "mypage";
+      case "community":
+        return "community";
       default:
         return "home";
     }
