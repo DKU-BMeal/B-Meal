@@ -20,6 +20,49 @@ export function extractPureIngredient(str) {
 }
 
 // ===============================
+// 예산 기반 식단 생성
+// ===============================
+export async function askMealPlan(budget, ingredients = [], opts = {}) {
+  const ingredientList = ingredients.length > 0
+    ? ingredients.map(i => `${i.name} ${i.quantity}${i.unit}`).join(', ')
+    : '';
+
+  const extraRules = [
+    opts.useCheap ? "- 두부, 계란, 콩나물, 채소 등 저렴한 재료 위주로 메뉴를 구성하세요." : "",
+    opts.useProtein ? "- 닭가슴살, 두부, 계란, 생선류 등 단백질 식품을 매일 포함하세요." : "",
+  ].filter(Boolean).join("\n");
+
+  const res = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: `당신은 식단 계획 전문가입니다. 반드시 아래 규칙을 지키세요.
+
+## 절대 규칙
+- 총 예상 지출이 반드시 주어진 예산 이하여야 합니다. 예산을 초과하면 안 됩니다.
+- 냉장고 재료는 수량/용량을 보고 몇 끼에 사용 가능한지 판단하세요. (예: 돼지고기 500g → 2~3끼, 계란 6개 → 3끼)
+- 냉장고 재료를 사용하는 끼니는 해당 재료 구매비 0원으로 계산합니다.
+- 아침/점심/저녁 모두 포함, 월요일~일요일 7일치
+- 각 끼니마다 메뉴명과 예상 추가 구매 재료비 표시 (냉장고 재료 활용 시 "(냉장고 활용)" 표시)
+- 총 예상 지출과 남은 예산 표시 후, 반드시 아래 형식으로 구매 필요 재료 목록 추가:
+---구매목록---
+재료명: 예상금액원
+재료명2: 예상금액원
+(이 구분자와 형식을 정확히 지킬 것 / 냉장고에 이미 있는 재료는 절대 포함하지 말 것)
+- 마크다운 없이 일반 텍스트로만 출력
+${extraRules}`,
+      },
+      {
+        role: "user",
+        content: `주간 식비 예산: ${Number(budget).toLocaleString()}원${ingredientList ? `\n\n냉장고 보유 재료 (수량/용량 반영): ${ingredientList}` : ''}\n\n이 예산 안에서 한 주 식단을 짜주세요. 총 지출이 ${Number(budget).toLocaleString()}원을 절대 넘으면 안 됩니다.`,
+      },
+    ],
+  });
+  return res.choices[0].message.content;
+}
+
+// ===============================
 // GPT JSON 레시피 생성
 // ===============================
 export async function askGPT(message, profile) {

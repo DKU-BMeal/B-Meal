@@ -291,6 +291,15 @@ export async function getFullRecipeDetail(id: string) {
 // ===============================
 // GPT / VOICE
 // ===============================
+export async function generateMealPlan(budget: string, ingredients: any[] = [], opts: any = {}): Promise<string> {
+  const res = await apiCall(
+    "/ai/meal-plan",
+    { method: "POST", body: JSON.stringify({ budget, ingredients, opts }) },
+    true
+  );
+  return res.result;
+}
+
 export async function askGPT_raw(data: any) {
   const res = await apiCall(
     "/ai/chat",

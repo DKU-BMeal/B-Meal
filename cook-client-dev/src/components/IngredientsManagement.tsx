@@ -8,10 +8,10 @@ import {Select,SelectContent, SelectItem, SelectTrigger,SelectValue,} from "./ui
 import { Badge } from "./ui/badge";
 import { Calendar } from "./ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import {Plus,Trash2,Edit,Calendar as CalendarIcon,AlertCircle,ArrowLeft,ChefHat,Snowflake,Apple,} from "lucide-react";
+import {Plus,Trash2,Edit,Calendar as CalendarIcon,AlertCircle,ArrowLeft,ChefHat,Snowflake,Apple,Sparkles,} from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { ko } from "date-fns/locale";
-import {getIngredients,addIngredient,updateIngredient,deleteIngredient,parseReceiptImage,} from "../utils/api";
+import {getIngredients,addIngredient,updateIngredient,deleteIngredient,parseReceiptImage,askGPT_raw,} from "../utils/api";
 import { toast } from "sonner";
 import { X } from "lucide-react";
 
@@ -231,9 +231,10 @@ const categorizeIngredient = (name: string): string => {
 
 interface IngredientsManagementProps {
   onBack?: () => void;
+  onStartCooking?: (recipe: any) => void;
 }
 
-export function IngredientsManagement({ onBack }: IngredientsManagementProps) {
+export function IngredientsManagement({ onBack, onStartCooking }: IngredientsManagementProps) {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -250,7 +251,9 @@ const [receiptIngredients, setReceiptIngredients] = useState<
 const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false);
 const fileInputRef = useRef<HTMLInputElement | null>(null);
 const [isReceiptReady, setIsReceiptReady] = useState(false);
-
+const [isRecommending, setIsRecommending] = useState(false);
+const [recommendations, setRecommendations] = useState<any[]>([]);
+const [showRecommendations, setShowRecommendations] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -302,6 +305,43 @@ const [isReceiptReady, setIsReceiptReady] = useState(false);
       toast.error("식재료 목록을 불러오는데 실패했습니다");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGetRecommendations = async () => {
+    if (ingredients.length === 0) {
+      toast.error("냉장고에 재료가 없습니다");
+      return;
+    }
+    setIsRecommending(true);
+    setShowRecommendations(true);
+    setRecommendations("");
+    try {
+      const expiringFirst = ingredients
+        .filter(ing => ing.expiryDate)
+        .sort((a, b) => new Date(a.expiryDate!).getTime() - new Date(b.expiryDate!).getTime())
+        .slice(0, 5)
+        .map(ing => `${ing.name}(${ing.quantity}${ing.unit}, ${differenceInDays(parseISO(ing.expiryDate!), new Date())}일 남음)`);
+      const others = ingredients
+        .filter(ing => !ing.expiryDate)
+        .slice(0, 10)
+        .map(ing => `${ing.name}(${ing.quantity}${ing.unit})`);
+      const list = [...expiringFirst, ...others].join(", ");
+      const reply = await askGPT_raw({
+        message: `냉장고에 다음 재료들이 있어요: ${list}. 이 재료들로 만들 수 있는 음식 3가지를 추천해주세요. 유통기한이 임박한 재료를 우선 사용하는 레시피를 포함해주세요. 각 레시피마다 재료와 간단한 조리 순서도 알려주세요.`,
+      });
+      // 응답이 객체(recipes 배열)면 그대로, 문자열이면 파싱 시도
+      let parsed: any = reply;
+      if (typeof reply === "string") {
+        try { parsed = JSON.parse(reply); } catch { parsed = { text: reply }; }
+      }
+      const recipeList = parsed?.recipes ?? (Array.isArray(parsed) ? parsed : null);
+      setRecommendations(recipeList ?? [{ recipeName: "추천 결과", steps: [typeof parsed?.text === "string" ? parsed.text : JSON.stringify(parsed)] }]);
+    } catch {
+      toast.error("추천을 불러오지 못했습니다");
+      setShowRecommendations(false);
+    } finally {
+      setIsRecommending(false);
     }
   };
 
@@ -606,6 +646,20 @@ const [isReceiptReady, setIsReceiptReady] = useState(false);
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button
+              onClick={handleGetRecommendations}
+              disabled={isRecommending}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "9px 18px", borderRadius: 10, fontSize: 13, fontWeight: 500,
+                background: "#fff", color: "#465940",
+                border: "1px solid #a3c49a", cursor: isRecommending ? "default" : "pointer",
+                opacity: isRecommending ? 0.7 : 1,
+              }}
+            >
+              <Sparkles style={{ width: 14, height: 14 }} />
+              {isRecommending ? "분석 중..." : "요리 추천받기"}
+            </button>
+            <button
               onClick={() => { resetForm(); setIsAddDialogOpen(true); }}
               style={{
                 display: "flex", alignItems: "center", gap: 6,
@@ -664,6 +718,72 @@ const [isReceiptReady, setIsReceiptReady] = useState(false);
             </div>
           )}
         </div>
+
+        {/* 소비 우선순위 */}
+        {ingredients.filter(i => i.expiryDate).length > 0 && (
+          <div>
+            <h2 style={{ fontSize: 15, fontWeight: 700, color: "#374151", marginBottom: 12 }}>이거 먼저 쓰세요</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {ingredients.filter(i => i.expiryDate).slice(0, 5).map(ing => {
+                const days = differenceInDays(parseISO(ing.expiryDate!), new Date());
+                const dotColor = days < 0 ? "#dc2626" : days === 0 ? "#f97316" : "#a3c49a";
+                const labelColor = days < 0 ? "#dc2626" : days === 0 ? "#f97316" : "#6b7280";
+                const label = days < 0 ? "유통기한 지남" : days === 0 ? "오늘 만료" : `${days}일 남음`;
+                const bg = days < 0 ? "#fef2f2" : days === 0 ? "#fff7ed" : "#f9fafb";
+                const border = days < 0 ? "1px solid #fecaca" : days === 0 ? "1px solid #fed7aa" : "1px solid #e5e7eb";
+                return (
+                  <div key={ing.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px", borderRadius: 10, background: bg, border }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 7, height: 7, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
+                      <span style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{ing.name}</span>
+                      <span style={{ fontSize: 12, color: "#9ca3af" }}>{ing.quantity}{ing.unit} · {ing.location}</span>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: labelColor }}>{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 요리 추천 결과 */}
+        {showRecommendations && (
+          <div style={{ background: "#f6f9f5", borderRadius: 16, padding: 24, border: "1px solid #d4e5c8" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Sparkles style={{ width: 16, height: 16, color: "#465940" }} />
+                <h2 style={{ fontSize: 15, fontWeight: 700, color: "#374151" }}>냉장고 재료로 만들 수 있는 요리</h2>
+              </div>
+              <button onClick={() => setShowRecommendations(false)} style={{ fontSize: 18, color: "#9ca3af", background: "none", border: "none", cursor: "pointer", lineHeight: 1 }}>×</button>
+            </div>
+            {isRecommending ? (
+              <p style={{ fontSize: 13, color: "#6b7280", textAlign: "center", padding: "12px 0" }}>AI가 냉장고 재료를 분석하고 있어요...</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {recommendations.map((r: any, i: number) => (
+                  <div key={i} style={{ background: "#fff", borderRadius: 12, padding: 16, border: "1px solid #e5e7eb", display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{i + 1}. {r.recipeName}</p>
+                      {onStartCooking && (
+                        <button
+                          onClick={() => onStartCooking(r)}
+                          style={{ padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "#465940", color: "#fff", border: "none", cursor: "pointer", flexShrink: 0 }}
+                        >
+                          만들기
+                        </button>
+                      )}
+                    </div>
+                    {(r.fullIngredients ?? r.ingredients ?? []).length > 0 && (
+                      <p style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6 }}>
+                        {(r.fullIngredients ?? r.ingredients ?? []).join("  ·  ")}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 보관 위치 카드 */}
         <div>
