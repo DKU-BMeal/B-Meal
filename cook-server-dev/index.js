@@ -17,6 +17,7 @@ import completedRecipesRoutes from './routes/completedRecipes.js';
 
 import communityRoutes from "./routes/community.js";
 import savedRoutes from "./routes/saved.js";
+import shopSearchRoutes from "./routes/shopSearch.js";
 
 
 
@@ -82,6 +83,7 @@ app.use("/api/recipes", recipesRoutes);
 app.use("/api", aiRoutes);
 
 app.use("/api/receipt", receiptRoutes);
+app.use("/api/shop-search", shopSearchRoutes);
 app.use("/api/completed-recipes", completedRecipesRoutes);
 
 /* ✅✅✅ 여기서부터 보호 라우트 */
