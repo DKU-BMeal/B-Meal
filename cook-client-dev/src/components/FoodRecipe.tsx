@@ -341,7 +341,7 @@ const handleStartAssistant = () => {
                         <span className="text-sm text-gray-700">{formatIngredientDisplay(ingredient)}</span>
                         <button
                           onClick={() => handleOpenShop(extractIngredientName(ingredient))}
-                          className="ml-4 flex-shrink-0 flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all hover:shadow-md active:scale-95"
+                          className="ml-4 flex-shrink-0 flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all hover:shadow-md active:scale-95 cursor-pointer"
                           style={{
                             background: 'linear-gradient(135deg, #465940 0%, #5a7350 100%)',
                             color: '#fff',
@@ -407,36 +407,34 @@ const handleStartAssistant = () => {
             {shopTarget && (
               <div
                 className="fixed inset-0 z-50 flex items-center justify-center"
-                style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}
+                style={{ background: 'rgba(0,0,0,0.5)' }}
                 onClick={handleCloseShop}
               >
                 <div
-                  className="bg-white flex flex-col"
-                  style={{ width: '90vw', maxWidth: '1400px', height: '88vh', borderRadius: '20px', boxShadow: '0 24px 60px rgba(0,0,0,0.22)' }}
+                  className="flex flex-col overflow-hidden bg-white"
+                  style={{ width: '90vw', maxWidth: '1400px', height: '88vh', borderRadius: '16px', boxShadow: '0 25px 60px rgba(0,0,0,0.2)' }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* 헤더 */}
-                  <div className="flex-shrink-0 px-6 pt-5 pb-0">
-                    <div className="flex items-start justify-between mb-4">
+                  <div className="flex-shrink-0 text-white px-6 pb-5" style={{ background: 'rgba(70,89,64,0.20)', paddingTop: '40px' }}>
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">재료 구매</p>
-                        <h3 className="text-xl font-bold text-gray-900">{shopTarget}
-                          <span className="ml-2 text-sm font-normal text-gray-400">검색 결과</span>
-                        </h3>
+                        <h3 style={{ fontSize: '2rem', fontWeight: 600 }}>{shopTarget}</h3>
                       </div>
                       <button
                         onClick={handleCloseShop}
-                        className="mt-1 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700"
+                        className="p-2 rounded-lg transition-colors cursor-pointer hover:bg-white/10"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="w-5 h-5" />
                       </button>
                     </div>
+                  </div>
 
-                    {/* 정렬 + 쇼핑몰 필터 */}
-                    <div className="flex flex-col gap-2 pb-3 border-b border-gray-100">
-                      {/* 정렬 */}
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-gray-400 w-8 flex-shrink-0">정렬</span>
+                  {/* 필터 섹션 */}
+                  <div className="flex-shrink-0 px-6 py-4 space-y-3" style={{ background: 'rgba(70,89,64,0.20)' }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-500 min-w-[60px]">정렬</span>
+                      <div className="flex gap-2">
                         {([
                           { key: 'default',    label: '기본순' },
                           { key: 'price_asc',  label: '낮은가격' },
@@ -445,39 +443,36 @@ const handleStartAssistant = () => {
                           <button
                             key={key}
                             onClick={() => setShopSort(key)}
-                            className="text-xs px-3 py-1 rounded-full font-medium transition-all"
-                            style={
-                              shopSort === key
-                                ? { background: '#465940', color: '#fff' }
-                                : { background: '#f3f4f6', color: '#6b7280' }
-                            }
+                            className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer"
+                            style={shopSort === key
+                              ? { background: '#465940', color: '#fff' }
+                              : { background: 'rgba(70,89,64,0.1)', color: '#465940' }}
                           >
                             {label}
                           </button>
                         ))}
                         {shopProducts.length > 0 && !shopLoading && (
-                          <span className="ml-auto text-xs text-gray-400">
+                          <span className="ml-4 text-sm text-gray-400 self-center">
                             {shopMallFilter
                               ? `${shopProducts.filter(p => mallLabel(p.mall) === shopMallFilter).length}개`
                               : `${shopProducts.length}개`}
                           </span>
                         )}
                       </div>
+                    </div>
 
-                      {/* 쇼핑몰 필터 */}
-                      {shopProducts.length > 0 && !shopLoading && (() => {
-                        const malls = [...new Set(shopProducts.map(p => mallLabel(p.mall)))].sort((a, b) => a.localeCompare(b, 'ko'));
-                        return (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-xs text-gray-400 w-8 flex-shrink-0">몰</span>
+                    {shopProducts.length > 0 && !shopLoading && (() => {
+                      const malls = [...new Set(shopProducts.map(p => mallLabel(p.mall)))].sort((a, b) => a.localeCompare(b, 'ko'));
+                      return (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-500 min-w-[60px]">쇼핑몰</span>
+                          <div className="flex gap-2 flex-wrap">
                             <button
                               onClick={() => setShopMallFilter(null)}
-                              className="text-xs px-3 py-1 rounded-full font-medium transition-all"
-                              style={
-                                shopMallFilter === null
-                                  ? { background: '#1f2937', color: '#fff' }
-                                  : { background: '#f3f4f6', color: '#6b7280' }
-                              }
+                              className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer"
+                              style={shopMallFilter === null
+                                ? { background: '#465940', color: '#fff' }
+                                : { background: 'rgba(70,89,64,0.1)', color: '#465940' }}
                             >
                               전체
                             </button>
@@ -485,19 +480,18 @@ const handleStartAssistant = () => {
                               <button
                                 key={mall}
                                 onClick={() => setShopMallFilter(shopMallFilter === mall ? null : mall)}
-                                className="text-xs px-3 py-1 rounded-full font-medium transition-all"
-                                style={
-                                  shopMallFilter === mall
-                                    ? { background: mallColor(mall), color: '#fff' }
-                                    : { background: '#f3f4f6', color: '#6b7280' }
-                                }
+                                className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer"
+                                style={shopMallFilter === mall
+                                  ? { background: '#465940', color: '#fff' }
+                                  : { background: 'rgba(70,89,64,0.1)', color: '#465940' }}
                               >
                                 {mall}
                               </button>
                             ))}
                           </div>
-                        );
-                      })()}</div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* 결과 */}
@@ -505,8 +499,8 @@ const handleStartAssistant = () => {
                     {shopLoading && (
                       <div className="flex flex-col items-center justify-center h-full text-gray-400">
                         <Loader2 className="animate-spin h-8 w-8 mb-3 text-[#465940]" />
-                        <p className="text-sm font-medium">상품 검색 중...</p>
-                        <p className="text-xs mt-1 text-gray-300">쿠팡 · 컬리 · 이마트</p>
+                        <p className="text-sm font-medium text-gray-500">상품 검색 중...</p>
+                        <p className="text-xs mt-1 text-gray-400">쿠팡 · 컬리 · 이마트</p>
                       </div>
                     )}
 
@@ -518,7 +512,7 @@ const handleStartAssistant = () => {
 
                     {!shopLoading && shopProducts.length > 0 && (
                       <>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '12px' }}>
+                        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
                           {[...shopProducts]
                             .filter(p => shopMallFilter === null || mallLabel(p.mall) === shopMallFilter)
                             .sort((a, b) => {
@@ -532,33 +526,26 @@ const handleStartAssistant = () => {
                                 href={product.link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex flex-col bg-white rounded-xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-md"
-                                style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)', border: '1px solid #efefef' }}
+                                className="group cursor-pointer bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
                               >
-                                {/* 이미지 + 몰 뱃지 */}
-                                <div className="w-full aspect-square bg-gray-50 overflow-hidden relative">
+                                {/* 이미지 + 뱃지 오버레이 */}
+                                <div className="aspect-square relative overflow-hidden bg-gray-100">
                                   {product.image ? (
-                                    <img src={product.image} alt={product.title} className="w-full h-full object-cover" />
+                                    <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                                   ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-200 text-xs">이미지 없음</div>
+                                    <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">이미지 없음</div>
                                   )}
-                                  {/* 좌상단 삼각형 컬러 액센트 */}
-                                  <div
-                                    className="absolute top-0 left-0"
-                                    style={{
-                                      width: 0,
-                                      height: 0,
-                                      borderStyle: 'solid',
-                                      borderWidth: '44px 44px 0 0',
-                                      borderColor: `${mallColor(product.mall)} transparent transparent transparent`,
-                                    }}
-                                  />
+                                  <div className="absolute top-2 left-2">
+                                    <span className="px-2 py-1 text-xs font-bold rounded-md shadow-sm text-white" style={{ background: mallColor(product.mall) }}>
+                                      {mallLabel(product.mall)}
+                                    </span>
+                                  </div>
                                 </div>
                                 {/* 정보 */}
-                                <div className="px-2.5 pt-2 pb-2.5">
-                                  <p className="text-[11px] text-gray-600 leading-tight line-clamp-2 mb-1.5">{product.title}</p>
-                                  <p className="text-[13px] font-bold text-gray-900">
-                                    {product.price}<span className="text-[10px] font-normal text-gray-400 ml-0.5">원</span>
+                                <div className="p-3">
+                                  <p className="text-sm text-gray-800 line-clamp-2 mb-2">{product.title}</p>
+                                  <p className="text-base font-semibold text-[#465940]">
+                                    {product.price}<span className="text-xs font-normal text-gray-400 ml-0.5">원</span>
                                   </p>
                                 </div>
                               </a>
@@ -571,8 +558,7 @@ const handleStartAssistant = () => {
                             <button
                               onClick={handleLoadMore}
                               disabled={shopLoadingMore}
-                              className="flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium transition-all"
-                              style={{ background: '#f3f4f6', color: '#465940', border: '1px solid #e5e7eb' }}
+                              className="flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium transition-colors cursor-pointer bg-gray-100 text-gray-700 hover:bg-gray-200"
                             >
                               {shopLoadingMore
                                 ? <><Loader2 className="h-4 w-4 animate-spin" /> 불러오는 중...</>
