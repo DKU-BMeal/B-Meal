@@ -341,7 +341,7 @@ const handleStartAssistant = () => {
                         <span className="text-sm text-gray-700">{formatIngredientDisplay(ingredient)}</span>
                         <button
                           onClick={() => handleOpenShop(extractIngredientName(ingredient))}
-                          className="ml-4 flex-shrink-0 flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all hover:shadow-md active:scale-95 cursor-pointer"
+                          className="ml-4 flex-shrink-0 flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg transition-all hover:shadow-md active:scale-95 cursor-pointer"
                           style={{
                             background: 'linear-gradient(135deg, #465940 0%, #5a7350 100%)',
                             color: '#fff',
@@ -416,14 +416,23 @@ const handleStartAssistant = () => {
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* 헤더 */}
-                  <div className="flex-shrink-0 text-white px-6 pb-5" style={{ background: 'rgba(70,89,64,0.20)', paddingTop: '40px' }}>
-                    <div className="flex items-center justify-between">
+                  <div className="flex-shrink-0 px-6 pb-8" style={{ background: 'rgba(70,89,64,0.20)', paddingTop: '28px' }}>
+                    <div className="flex items-start justify-between">
                       <div>
-                        <h3 style={{ fontSize: '2rem', fontWeight: 600 }}>{shopTarget}</h3>
+                        <p className="text-xs font-medium mb-3" style={{ color: 'rgba(70,89,64,0.5)' }}>쇼핑몰 검색</p>
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 rounded-xl" style={{ background: 'rgba(70,89,64,0.12)' }}>
+                            <ShoppingCart className="w-6 h-6" style={{ color: '#465940' }} />
+                          </div>
+                          <h3 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#465940' }}>{shopTarget}</h3>
+                        </div>
                       </div>
                       <button
                         onClick={handleCloseShop}
-                        className="p-2 rounded-lg transition-colors cursor-pointer hover:bg-white/10"
+                        className="p-2 rounded-lg transition-colors cursor-pointer"
+                        style={{ color: '#465940' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(70,89,64,0.12)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                       >
                         <X className="w-5 h-5" />
                       </button>
@@ -431,19 +440,19 @@ const handleStartAssistant = () => {
                   </div>
 
                   {/* 필터 섹션 */}
-                  <div className="flex-shrink-0 px-6 py-4 space-y-3" style={{ background: 'rgba(70,89,64,0.20)' }}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500 min-w-[60px]">정렬</span>
-                      <div className="flex gap-2">
+                  <div className="flex-shrink-0 px-6 pt-3.5 pb-6 space-y-3" style={{ background: 'rgba(70,89,64,0.20)' }}>
+                    <div className="flex items-center">
+                      <span className="text-sm text-gray-500 w-16 flex-shrink-0">정렬</span>
+                      <div className="flex gap-2 flex-1">
                         {([
                           { key: 'default',    label: '기본순' },
-                          { key: 'price_asc',  label: '낮은가격' },
-                          { key: 'price_desc', label: '높은가격' },
+                          { key: 'price_asc',  label: '낮은 가격' },
+                          { key: 'price_desc', label: '높은 가격' },
                         ] as const).map(({ key, label }) => (
                           <button
                             key={key}
                             onClick={() => setShopSort(key)}
-                            className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer"
+                            className="px-4 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer"
                             style={shopSort === key
                               ? { background: '#465940', color: '#fff' }
                               : { background: 'rgba(70,89,64,0.1)', color: '#465940' }}
@@ -451,25 +460,25 @@ const handleStartAssistant = () => {
                             {label}
                           </button>
                         ))}
-                        {shopProducts.length > 0 && !shopLoading && (
-                          <span className="ml-4 text-sm text-gray-400 self-center">
-                            {shopMallFilter
-                              ? `${shopProducts.filter(p => mallLabel(p.mall) === shopMallFilter).length}개`
-                              : `${shopProducts.length}개`}
-                          </span>
-                        )}
                       </div>
+                      {shopProducts.length > 0 && !shopLoading && (
+                        <span className="text-xs text-gray-400 flex-shrink-0">
+                          {shopMallFilter
+                            ? `${shopProducts.filter(p => mallLabel(p.mall) === shopMallFilter).length}개`
+                            : `${shopProducts.length}개`}
+                        </span>
+                      )}
                     </div>
 
                     {shopProducts.length > 0 && !shopLoading && (() => {
                       const malls = [...new Set(shopProducts.map(p => mallLabel(p.mall)))].sort((a, b) => a.localeCompare(b, 'ko'));
                       return (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-500 min-w-[60px]">쇼핑몰</span>
+                        <div className="flex items-center">
+                          <span className="text-sm text-gray-500 w-16 flex-shrink-0">쇼핑몰</span>
                           <div className="flex gap-2 flex-wrap">
                             <button
                               onClick={() => setShopMallFilter(null)}
-                              className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer"
+                              className="px-4 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer"
                               style={shopMallFilter === null
                                 ? { background: '#465940', color: '#fff' }
                                 : { background: 'rgba(70,89,64,0.1)', color: '#465940' }}
@@ -480,7 +489,7 @@ const handleStartAssistant = () => {
                               <button
                                 key={mall}
                                 onClick={() => setShopMallFilter(shopMallFilter === mall ? null : mall)}
-                                className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer"
+                                className="px-4 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer"
                                 style={shopMallFilter === mall
                                   ? { background: '#465940', color: '#fff' }
                                   : { background: 'rgba(70,89,64,0.1)', color: '#465940' }}
