@@ -1,5 +1,5 @@
 import express from 'express';
-import { chatWithGPT, chatFollowup, chatIntent, chatMealPlan } from '../controllers/aiController.js';
+import { chatWithGPT, chatFollowup, chatIntent, chatMealPlan, chatWasteTips } from '../controllers/aiController.js';
 
 const router = express.Router();
 
@@ -14,5 +14,8 @@ router.post('/ai/intent', chatIntent);
 
 // 예산 기반 식단 생성
 router.post('/ai/meal-plan', chatMealPlan);
+
+// 낭비 팁 생성
+router.post('/ai/waste-tips', chatWasteTips);
 
 export default router;

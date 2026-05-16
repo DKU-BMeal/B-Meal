@@ -4,6 +4,7 @@ import {
   askGPTFollowup,
   askIntent,
   askMealPlan,
+  askWasteTips,
   isQuickNextCommand
 } from "../services/aiService.js";
 
@@ -91,6 +92,20 @@ export const chatFollowup = async (req, res) => {
       error: "대화 처리 중 오류가 발생했습니다.",
       recipe: req.body.recipe // 상태 유지를 위해 받은 레시피 반환
     });
+  }
+};
+
+// ===============================================
+// ★ 낭비 팁 생성 API
+// ===============================================
+export const chatWasteTips = async (req, res) => {
+  try {
+    const { expiredIngredients, expiringIngredients } = req.body;
+    const result = await askWasteTips(expiredIngredients || [], expiringIngredients || []);
+    res.json(result);
+  } catch (err) {
+    console.error("WasteTips Error:", err);
+    res.status(500).json({ tips: [] });
   }
 };
 

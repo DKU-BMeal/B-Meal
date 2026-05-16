@@ -28,8 +28,12 @@ export async function askMealPlan(budget, ingredients = [], opts = {}) {
     : '';
 
   const extraRules = [
+    opts.servings ? `- 모든 재료량은 ${opts.servings === 4 ? "3~4" : opts.servings}인분 기준으로 계산하세요.` : "- 모든 재료량은 1인분 기준으로 계산하세요.",
     opts.useCheap ? "- 두부, 계란, 콩나물, 채소 등 저렴한 재료 위주로 메뉴를 구성하세요." : "",
     opts.useProtein ? "- 닭가슴살, 두부, 계란, 생선류 등 단백질 식품을 매일 포함하세요." : "",
+    opts.useSimple ? "- 조리 시간 30분 이내의 간편한 요리 위주로 구성하세요." : "",
+    opts.useLowCalorie ? "- 저칼로리 식재료와 찜·구이·샐러드 등 담백한 조리법을 활용하세요." : "",
+    opts.useVegetarian ? "- 육류와 생선 없이 채소·두부·계란 위주의 채식 식단으로 구성하세요." : "",
   ].filter(Boolean).join("\n");
 
   const res = await client.chat.completions.create({
@@ -50,7 +54,8 @@ export async function askMealPlan(budget, ingredients = [], opts = {}) {
 재료명: 예상금액원
 재료명2: 예상금액원
 (이 구분자와 형식을 정확히 지킬 것 / 냉장고에 이미 있는 재료는 절대 포함하지 말 것)
-- 마크다운 없이 일반 텍스트로만 출력
+- 마크다운 절대 금지: **, *, #, - 같은 기호 사용하지 말 것
+- 일반 텍스트로만 출력
 ${extraRules}`,
       },
       {
@@ -294,6 +299,46 @@ export async function stt(audioBuffer) {
     console.error("STT Error:", err);
     throw new Error("STT 변환 실패");
   }
+}
+
+// ===============================
+// 낭비 줄이는 팁 생성
+// ===============================
+export async function askWasteTips(expiredIngredients, expiringIngredients) {
+  const expiredList = expiredIngredients.map(i => i.name).join(", ") || "없음";
+  const expiringList = expiringIngredients.map(i => i.name).join(", ") || "없음";
+
+  const res = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content: `식재료 낭비를 줄이는 실용적인 팁을 제공하는 AI입니다.
+
+주어진 만료/임박 재료를 보고 각 재료를 어떻게 처리하면 좋은지 구체적인 팁을 JSON으로 출력하세요.
+
+출력 형식:
+{
+  "tips": [
+    { "title": "짧은 제목", "desc": "구체적인 활용 방법 한 줄" }
+  ]
+}
+
+규칙:
+- 최대 4개 팁
+- 재료명을 title에 포함시켜 어떤 재료에 대한 팁인지 명확히 할 것
+- 냉동보관, 요리 활용, 빠른 소비 방법 등 실용적인 내용
+- 재료가 모두 없으면 빈 배열 반환`,
+      },
+      {
+        role: "user",
+        content: `만료된 재료: ${expiredList}\n임박 재료 (7일 이내): ${expiringList}`,
+      },
+    ],
+  });
+
+  return JSON.parse(res.choices[0].message.content);
 }
 
 export function isQuickNextCommand(text) {
