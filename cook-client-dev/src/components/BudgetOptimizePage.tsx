@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { differenceInDays, parseISO } from "date-fns";
-import { ChefHat, ShoppingCart, Trash2, BarChart2, ChevronDown, ChevronUp } from "lucide-react";
+import { ChefHat, ShoppingCart, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import {
   getIngredients,
   getCompletedRecipes,
   generateMealPlan,
+  getWasteTips,
   searchShopProducts,
   type ShopProduct,
 } from "../utils/api";
@@ -41,9 +42,17 @@ export function BudgetOptimizePage() {
   const [mealPlan, setMealPlan] = useState(() => localStorage.getItem("budget_meal_plan") || "");
   const [isGenerating, setIsGenerating] = useState(false);
   const [showFullPlan, setShowFullPlan] = useState(false);
+  const [showPurchaseList, setShowPurchaseList] = useState(false);
   const [useFridge, setUseFridge] = useState(true);
   const [useCheap, setUseCheap] = useState(false);
   const [useProtein, setUseProtein] = useState(false);
+  const [useSimple, setUseSimple] = useState(false);
+  const [useLowCalorie, setUseLowCalorie] = useState(false);
+  const [useVegetarian, setUseVegetarian] = useState(false);
+  const [servings, setServings] = useState(1);
+
+  const [wasteTips, setWasteTips] = useState<Array<{ title: string; desc: string }>>([]);
+  const [isLoadingTips, setIsLoadingTips] = useState(false);
 
   const [shopQuery, setShopQuery] = useState("");
   const [shopResults, setShopResults] = useState<ShopProduct[]>([]);
@@ -60,6 +69,24 @@ export function BudgetOptimizePage() {
         }));
         setIngredients(normalized);
         setCompletedRecipes(recipes || []);
+        if (normalized.length === 0) setUseFridge(false);
+
+        const expired = normalized.filter((ing: any) => {
+          if (!ing.expiryDate) return false;
+          return differenceInDays(parseISO(ing.expiryDate), new Date()) < 0;
+        });
+        const expiring = normalized.filter((ing: any) => {
+          if (!ing.expiryDate) return false;
+          const d = differenceInDays(parseISO(ing.expiryDate), new Date());
+          return d >= 0 && d <= 7;
+        });
+        if (expired.length > 0 || expiring.length > 0) {
+          setIsLoadingTips(true);
+          getWasteTips(expired, expiring)
+            .then(tips => setWasteTips(tips))
+            .catch(() => {})
+            .finally(() => setIsLoadingTips(false));
+        }
       } catch {
         toast.error("데이터를 불러오지 못했습니다");
       } finally {
@@ -86,29 +113,6 @@ export function BudgetOptimizePage() {
     return acc;
   }, {});
   const topRecipeEntry = Object.entries(recipeCounts).sort((a, b) => b[1] - a[1])[0];
-
-  const categoryMap = completedRecipes.reduce<Record<string, number>>((acc, r) => {
-    const cat = r.category || "기타";
-    acc[cat] = (acc[cat] || 0) + 1;
-    return acc;
-  }, {});
-  const categories = Object.entries(categoryMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const maxCat = categories.length > 0 ? categories[0][1] : 1;
-
-  const dayLabels = ["일", "월", "화", "수", "목", "금", "토"];
-  const past7Days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(now);
-    d.setDate(d.getDate() - (6 - i));
-    return d;
-  });
-  const dailyCounts = past7Days.map(d => ({
-    label: dayLabels[d.getDay()],
-    count: completedRecipes.filter(r => {
-      if (!r.completedAt) return false;
-      return new Date(r.completedAt).toDateString() === d.toDateString();
-    }).length,
-  }));
-  const maxDaily = Math.max(...dailyCounts.map(d => d.count), 1);
 
   const getCategory = (name: string) => {
     if (/양파|마늘|대파|파|배추|시금치|당근|감자|고추|호박|토마토|오이|버섯|브로콜리/.test(name)) return "채소";
@@ -142,9 +146,9 @@ export function BudgetOptimizePage() {
   })).sort((a, b) => b.expired - a.expired);
 
   // 구매목록 파싱
-  const planBody = mealPlan.includes(PURCHASE_SEP)
+  const planBody = (mealPlan.includes(PURCHASE_SEP)
     ? mealPlan.split(PURCHASE_SEP)[0].trimEnd()
-    : mealPlan;
+    : mealPlan).replace(/\*\*/g, "").replace(/\*/g, "");
   const purchaseItems = parsePurchaseItems(mealPlan);
 
   const handleGenerateMealPlan = async () => {
@@ -152,8 +156,9 @@ export function BudgetOptimizePage() {
     setIsGenerating(true);
     setMealPlan("");
     setShowFullPlan(false);
+    setShowPurchaseList(false);
     try {
-      const reply = await generateMealPlan(budget, useFridge ? ingredients : [], { useCheap, useProtein });
+      const reply = await generateMealPlan(budget, useFridge ? ingredients : [], { useCheap, useProtein, useSimple, useLowCalorie, useVegetarian, servings });
       setMealPlan(reply);
       localStorage.setItem("budget_meal_plan", reply);
       localStorage.setItem("budget_input", budget);
@@ -182,12 +187,6 @@ export function BudgetOptimizePage() {
   };
 
   const card = { background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #e5e7eb" };
-
-  const tips = [
-    { title: "소분 냉동 보관", desc: "육류·생선은 1회분씩 소분해 냉동하면 낭비를 줄일 수 있어요." },
-    { title: "채소 우선 소비", desc: "유통기한이 짧은 채소류부터 먼저 요리에 활용하세요." },
-    { title: "냉장고 정기 점검", desc: "주 1회 냉장고를 점검하고 임박 재료를 앞쪽으로 배치하세요." },
-  ];
 
   const iconBox = (gradient: string) => ({
     width: 36, height: 36, borderRadius: 10, background: gradient,
@@ -239,55 +238,6 @@ export function BudgetOptimizePage() {
           </div>
         </div>
       )}
-
-      {/* 2. 소비 패턴 분석 */}
-      <div style={card}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-          <div style={iconBox("linear-gradient(135deg,#e8f2dd,#c6ddb8)")}>
-            <BarChart2 style={{ width: 18, height: 18, color: "#465940" }} />
-          </div>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "#111827" }}>소비 패턴 분석</h2>
-        </div>
-        {loading ? (
-          <p style={{ fontSize: 13, color: "#9ca3af", textAlign: "center" }}>불러오는 중...</p>
-        ) : completedRecipes.length === 0 ? (
-          <p style={{ fontSize: 13, color: "#9ca3af", textAlign: "center", padding: "16px 0" }}>아직 요리 기록이 없어요</p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 12 }}>카테고리별 요리</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {categories.map(([cat, count]) => (
-                  <div key={cat} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 12, color: "#374151", width: 48, flexShrink: 0 }}>{cat}</span>
-                    <div style={{ flex: 1, height: 10, background: "#f3f4f6", borderRadius: 99, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${Math.round((count / maxCat) * 100)}%`, background: "#465940", borderRadius: 99 }} />
-                    </div>
-                    <span style={{ fontSize: 12, color: "#6b7280", width: 28, textAlign: "right", flexShrink: 0 }}>{count}회</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 12 }}>최근 7일 요리 빈도</p>
-              <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80 }}>
-                {dailyCounts.map((d, i) => (
-                  <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, height: "100%", justifyContent: "flex-end" }}>
-                    <span style={{ fontSize: 11, color: "#6b7280" }}>{d.count > 0 ? d.count : ""}</span>
-                    <div style={{
-                      width: "100%",
-                      height: `${d.count > 0 ? Math.max(d.count / maxDaily * 52, 8) : 4}px`,
-                      background: d.count > 0 ? "#465940" : "#e5e7eb",
-                      borderRadius: "4px 4px 0 0",
-                    }} />
-                    <span style={{ fontSize: 11, color: "#9ca3af" }}>{d.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* 3. 음식물 낭비 분석 */}
       <div style={card}>
@@ -360,17 +310,23 @@ export function BudgetOptimizePage() {
             )}
 
             {/* 낭비 줄이는 팁 */}
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 10 }}>낭비 줄이는 방법</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {tips.map((tip, i) => (
-                  <div key={i} style={{ padding: "12px 14px", background: "#f9fafb", borderRadius: 10, borderLeft: "3px solid #c6ddb8" }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{tip.title}</p>
-                    <p style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{tip.desc}</p>
+            {(isLoadingTips || wasteTips.length > 0) && (
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 10 }}>낭비 줄이는 방법</p>
+                {isLoadingTips ? (
+                  <p style={{ fontSize: 13, color: "#9ca3af", padding: "8px 0" }}>AI가 맞춤 팁을 생성하고 있어요...</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {wasteTips.map((tip, i) => (
+                      <div key={i} style={{ padding: "12px 14px", background: "#f9fafb", borderRadius: 10, borderLeft: "3px solid #c6ddb8" }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{tip.title}</p>
+                        <p style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{tip.desc}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            </div>
+            )}
           </>
         )}
       </div>
@@ -384,24 +340,59 @@ export function BudgetOptimizePage() {
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "#111827" }}>예산 기반 식단 생성</h2>
         </div>
 
+        {/* 분량 선택 */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+          <span style={{ fontSize: 12, color: "#6b7280", flexShrink: 0 }}>분량</span>
+          <div style={{ display: "flex", background: "#f3f4f6", borderRadius: 10, padding: 3, gap: 2 }}>
+            {[{ label: "1인", value: 1 }, { label: "2인", value: 2 }, { label: "3~4인", value: 4 }].map(({ label, value }) => (
+              <button
+                key={value}
+                onClick={() => setServings(value)}
+                style={{
+                  padding: "5px 14px", borderRadius: 8, fontSize: 12, fontWeight: servings === value ? 600 : 400,
+                  background: servings === value ? "#fff" : "transparent",
+                  color: servings === value ? "#465940" : "#6b7280",
+                  border: "none", cursor: "pointer",
+                  boxShadow: servings === value ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* 옵션 칩 */}
         <div style={{ marginBottom: 14 }}>
-          <p style={{ fontSize: 12, color: "#6b7280", marginBottom: 8 }}>식단 옵션 선택</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
             {[
-              { label: "냉장고 재료 우선", active: useFridge, toggle: () => setUseFridge(v => !v) },
-              { label: "저렴한 재료 위주", active: useCheap, toggle: () => setUseCheap(v => !v) },
-              { label: "단백질 균형", active: useProtein, toggle: () => setUseProtein(v => !v) },
-            ].map(({ label, active, toggle }) => (
+              {
+                label: "냉장고 재료 우선",
+                active: useFridge,
+                disabled: ingredients.length === 0,
+                toggle: () => {
+                  if (ingredients.length === 0) { toast.error("냉장고에 재료가 없어요. 먼저 재료를 추가해주세요."); return; }
+                  setUseFridge(v => !v);
+                },
+              },
+              { label: "저렴한 재료 위주", active: useCheap, disabled: false, toggle: () => setUseCheap(v => !v) },
+              { label: "단백질 균형", active: useProtein, disabled: false, toggle: () => setUseProtein(v => !v) },
+              { label: "간편 조리 위주", active: useSimple, disabled: false, toggle: () => setUseSimple(v => !v) },
+              { label: "저칼로리", active: useLowCalorie, disabled: false, toggle: () => setUseLowCalorie(v => !v) },
+              { label: "채식 위주", active: useVegetarian, disabled: false, toggle: () => setUseVegetarian(v => !v) },
+            ].map(({ label, active, disabled, toggle }) => (
               <button
                 key={label}
                 onClick={toggle}
+                disabled={disabled}
                 style={{
-                  padding: "6px 14px", borderRadius: 20, fontSize: 13, cursor: "pointer",
+                  padding: "6px 13px", borderRadius: 20, fontSize: 12,
+                  cursor: disabled ? "not-allowed" : "pointer",
                   fontWeight: active ? 600 : 400,
-                  background: active ? "#465940" : "#fff",
-                  color: active ? "#fff" : "#374151",
-                  border: `1.5px solid ${active ? "#465940" : "#d1d5db"}`,
+                  background: disabled ? "#f3f4f6" : active ? "#465940" : "#fff",
+                  color: disabled ? "#9ca3af" : active ? "#fff" : "#374151",
+                  border: `1.5px solid ${disabled ? "#e5e7eb" : active ? "#465940" : "#d1d5db"}`,
+                  opacity: disabled ? 0.6 : 1,
                 }}
               >
                 {label}
@@ -479,31 +470,37 @@ export function BudgetOptimizePage() {
 
             {/* 구매 필요 재료 목록 */}
             {purchaseItems.length > 0 && (
-              <div style={{ marginTop: 14 }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 8 }}>
-                  구매 필요 재료 ({purchaseItems.length}개)
-                </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {purchaseItems.map((item, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 12px", background: "#f9fafb", borderRadius: 9, border: "1px solid #e5e7eb" }}>
-                      <span style={{ fontSize: 13, color: "#374151" }}>{item.name}</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        {item.price !== null && (
-                          <span style={{ fontSize: 12, color: "#6b7280" }}>약 {item.price.toLocaleString()}원</span>
-                        )}
-                        <button
-                          onClick={() => {
-                            handleShopSearch(item.name);
-                            document.getElementById("shop-section")?.scrollIntoView({ behavior: "smooth" });
-                          }}
-                          style={{ padding: "3px 10px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: "#465940", color: "#fff", border: "none", cursor: "pointer" }}
-                        >
-                          마트 확인
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+              <div style={{ marginTop: 8 }}>
+                <div
+                  onClick={() => setShowPurchaseList(v => !v)}
+                  style={{ padding: "12px 16px", background: "#f9fafb", borderRadius: 12, border: "1px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
+                >
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>구매 필요 재료 ({purchaseItems.length}개)</p>
+                  {showPurchaseList ? <ChevronUp style={{ width: 15, height: 15, color: "#6b7280" }} /> : <ChevronDown style={{ width: 15, height: 15, color: "#6b7280" }} />}
                 </div>
+                {showPurchaseList && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 6 }}>
+                    {purchaseItems.map((item, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 12px", background: "#f9fafb", borderRadius: 9, border: "1px solid #e5e7eb" }}>
+                        <span style={{ fontSize: 13, color: "#374151" }}>{item.name}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          {item.price !== null && (
+                            <span style={{ fontSize: 12, color: "#6b7280" }}>약 {item.price.toLocaleString()}원</span>
+                          )}
+                          <button
+                            onClick={() => {
+                              handleShopSearch(item.name);
+                              document.getElementById("shop-section")?.scrollIntoView({ behavior: "smooth" });
+                            }}
+                            style={{ padding: "3px 10px", borderRadius: 7, fontSize: 12, fontWeight: 500, background: "#465940", color: "#fff", border: "none", cursor: "pointer" }}
+                          >
+                            마트 확인
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

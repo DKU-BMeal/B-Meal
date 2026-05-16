@@ -291,6 +291,15 @@ export async function getFullRecipeDetail(id: string) {
 // ===============================
 // GPT / VOICE
 // ===============================
+export async function getWasteTips(expiredIngredients: any[], expiringIngredients: any[]): Promise<Array<{ title: string; desc: string }>> {
+  const res = await apiCall(
+    "/ai/waste-tips",
+    { method: "POST", body: JSON.stringify({ expiredIngredients, expiringIngredients }) },
+    true
+  );
+  return res.tips || [];
+}
+
 export async function generateMealPlan(budget: string, ingredients: any[] = [], opts: any = {}): Promise<string> {
   const res = await apiCall(
     "/ai/meal-plan",
